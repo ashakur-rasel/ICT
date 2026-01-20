@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Teacher Panel | Rasel's ICT Hub</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+      <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+            import { getFirestore, collection, addDoc, getDocs, query, orderBy, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+            const firebaseConfig = {
+                  apiKey: "AIzaSyBKFKKfNmmf9lvLdARZzL4WfSqqYeyN5P0",
+                  authDomain: "rasel-ict-hub-61ce0.firebaseapp.com",
+                  projectId: "rasel-ict-hub-61ce0",
+                  storageBucket: "rasel-ict-hub-61ce0.firebasestorage.app",
+                  messagingSenderId: "914822238317",
+                  appId: "1:914822238317:web:f4fc09d89ca8bfd932af64",
+                  measurementId: "G-H50N54TXN8"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth();
+            const db = getFirestore(app);
+
+            // --- Auth State Monitor ---
+            onAuthStateChanged(auth, (user) => {
+                  if (user) {
+                        document.getElementById('login-section').classList.add('hidden');
+                        document.getElementById('dashboard').classList.remove('hidden');
+                        loadStudents();
+                        loadMessages();
+                  } else {
+                        document.getElementById('login-section').classList.remove('hidden');
+                        document.getElementById('dashboard').classList.add('hidden');
+                  }
+            });
+
+            // --- Admin Login ---
+            window.loginAdmin = async () => {
+                  const email = document.getElementById('email').value;
+                  const pass = document.getElementById('pass').value;
+                  try {
+                        await signInWithEmailAndPassword(auth, email, pass);
+                  } catch (error) {
+                        alert("ভুল ইমেইল বা পাসওয়ার্ড!");
+                  }
+            };
+
+            // --- Logout ---
+            window.logout = async () => {
+                  await signOut(auth);
+                  location.reload();
+            };
+
+            // --- Resource Upload (Dynamic Types & Sections) ---
+            window.uploadResource = async () => {
+                  const ch = document.getElementById('resChapter').value;
+                  const title = document.getElementById('resTitle').value;
+                  const type = document.getElementById('resType').value;
+                  const link = document.getElementById('resLink').value;
+
+                  if (!title || !link) return alert("তথ্য পূরণ করুন!");
+
+                  try {
+                        await addDoc(collection(db, "resources"), {
+                              chapter: ch,
+                              title: title,
+                              type: type,
+                              link: link,
+                              createdAt: serverTimestamp()
+                        });
+                        alert("রিসোর্স আপলোড সফল! ✅");
+                        document.getElementById('resTitle').value = "";
+                        document.getElementById('resLink').value = "";
+                  } catch (e) { alert("Error: " + e.message); }
+            };
+
+            // --- Live Session Link Controller ---
+            window.updateLiveLink = async () => {
+                  const link = document.getElementById('liveLink').value;
+                  if (!link) return alert("লিঙ্কটি দিন!");
+                  try {
+                        const q = query(collection(db, "live_session"));
+                        const snap = await getDocs(q);
+                        if (!snap.empty) {
+                              await updateDoc(doc(db, "live_session", snap.docs[0].id), {
+                                    url: link,
+                                    updatedAt: serverTimestamp()
+                              });
+                        } else {
+                              await addDoc(collection(db, "live_session"), {
+                                    url: link,
+                                    updatedAt: serverTimestamp()
+                              });
+                        }
+                        alert("লাইভ লিঙ্ক আপডেট হয়েছে! 🚀");
+                        document.getElementById('liveLink').value = "";
+                  } catch (e) { alert(e.message); }
+            };
+
+            // --- Real-time Message Inbox ---
+            function loadMessages() {
+                  const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
+                  onSnapshot(q, (snapshot) => {
+                        const container = document.getElementById('message-inbox');
+                        container.innerHTML = "";
+                        snapshot.forEach(docSnap => {
+                              const msg = docSnap.data();
+                              container.innerHTML += `
+                        <div class="glass p-4 rounded-xl border-l-4 border-yellow-500 mb-3 animate__animated animate__fadeIn">
+                            <div class="flex justify-between text-[10px] text-gray-500 mb-2">
+                                <span>FROM: ${msg.studentName} (${msg.studentRoll})</span>
+                                <span>${msg.timestamp?.toDate().toLocaleTimeString() || 'Now'}</span>
+                            </div>
+                            <p class="text-sm text-gray-200">${msg.text}</p>
+                            <button onclick="deleteMessage('${docSnap.id}')" class="mt-2 text-[10px] text-red-400 hover:text-red-300">Delete Message ×</button>
+                        </div>
+                    `;
+                        });
+                  });
+            }
+
+            window.deleteMessage = async (id) => {
+                  if (confirm("মেসেজটি ডিলিট করবেন?")) await deleteDoc(doc(db, "messages", id));
+            };
+
+            // --- Notice Update ---
+            window.updateNotice = async () => {
+                  const text = document.getElementById('noticeText').value;
+                  try {
+                        const q = query(collection(db, "notices"));
+                        const snap = await getDocs(q);
+                        if (!snap.empty) {
+                              await updateDoc(doc(db, "notices", snap.docs[0].id), { text: text });
+                        } else {
+                              await addDoc(collection(db, "notices"), { text: text });
+                        }
+                        alert("নোটিশ আপডেট হয়েছে!");
+                  } catch (e) { alert(e.message); }
+            };
+
+            // --- Student Management ---
+            window.registerStudentAuth = async () => {
+                  const sName = document.getElementById('sName').value;
+                  const sRoll = document.getElementById('sRoll').value;
+                  const sEmail = document.getElementById('sEmail').value;
+                  const sPass = document.getElementById('sPass').value;
+                  try {
+                        const userCredential = await createUserWithEmailAndPassword(auth, sEmail, sPass);
+                        await addDoc(collection(db, "students"), {
+                              uid: userCredential.user.uid,
+                              name: sName,
+                              roll: sRoll,
+                              email: sEmail,
+                              createdAt: serverTimestamp()
+                        });
+                        alert("রেজিস্ট্রেশন সফল!");
+                        loadStudents();
+                  } catch (e) { alert(e.message); }
+            };
+
+            async function loadStudents() {
+                  const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
+                  const querySnapshot = await getDocs(q);
+                  const container = document.getElementById('student-list-container');
+                  container.innerHTML = "";
+                  querySnapshot.forEach((docSnap) => {
+                        const data = docSnap.data();
+                        container.innerHTML += `
+                    <div class="glass p-4 rounded-2xl border-l-2 border-sky-500">
+                        <h4 class="text-white font-bold text-sm">${data.name}</h4>
+                        <p class="text-sky-400 text-[10px] font-mono tracking-tighter">ID: ${data.roll}</p>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="deleteStudent('${docSnap.id}')" class="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded">Delete</button>
+                            <button onclick="resetStudentPassword('${data.email}')" class="text-[10px] bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded">Reset</button>
+                        </div>
+                    </div>`;
+                  });
+            }
+            window.deleteStudent = async (id) => { if (confirm("ডিলিট করবেন?")) { await deleteDoc(doc(db, "students", id)); loadStudents(); } };
+            window.resetStudentPassword = async (email) => { await sendPasswordResetEmail(auth, email); alert("লিঙ্ক পাঠানো হয়েছে!"); };
+            window.togglePassword = (id) => { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; };
+
+      </script>
+      <style>
+            body {
+                  background-color: #0b1120;
+                  color: white;
+                  font-family: sans-serif;
+            }
+
+            .glass {
+                  background: rgba(255, 255, 255, 0.03);
+                  backdrop-filter: blur(10px);
+                  border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            ::-webkit-scrollbar {
+                  width: 5px;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                  background: #1e293b;
+                  border-radius: 10px;
+            }
+      </style>
+</head>
+
+<body class="p-4 md:p-8">
+
+      <div id="login-section" class="max-w-md mx-auto mt-20">
+            <div class="glass p-8 rounded-3xl animate__animated animate__zoomIn">
+                  <h2 class="text-2xl font-black text-sky-400 mb-8 text-center tracking-tighter uppercase">Admin
+                        Encryption</h2>
+                  <input id="email" type="email" placeholder="Access Email"
+                        class="w-full bg-slate-900/50 p-4 rounded-xl mb-4 outline-none border border-slate-700 focus:border-sky-500">
+                  <div class="relative mb-6">
+                        <input id="pass" type="password" placeholder="Key Phrase"
+                              class="w-full bg-slate-900/50 p-4 rounded-xl outline-none border border-slate-700 focus:border-sky-500">
+                        <button onclick="togglePassword('pass')"
+                              class="absolute right-4 top-4 text-gray-500">👁️</button>
+                  </div>
+                  <button onclick="loginAdmin()"
+                        class="w-full bg-sky-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-sky-400 transition-all shadow-lg shadow-sky-900/20">Unlock
+                        Dashboard 🔐</button>
+            </div>
+      </div>
+
+      <div id="dashboard" class="hidden max-w-7xl mx-auto">
+            <header class="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
+                  <div>
+                        <h1 class="text-2xl font-black text-sky-400 tracking-tighter uppercase">Teacher's Control Hub
+                        </h1>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Quality Assurance & Resource
+                              Protocol</p>
+                  </div>
+                  <button onclick="logout()"
+                        class="bg-red-500/10 text-red-500 px-6 py-2 rounded-xl text-xs font-bold border border-red-500/20 hover:bg-red-500 hover:text-white transition">EXIT
+                        PANEL</button>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  <div class="lg:col-span-4 space-y-8">
+                        <div class="glass p-6 rounded-3xl">
+                              <h3 class="text-lg font-bold mb-5 flex items-center gap-2">👤 Register Student</h3>
+                              <div class="space-y-3">
+                                    <input id="sName" type="text" placeholder="Full Name"
+                                          class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-sky-500 text-sm">
+                                    <input id="sRoll" type="text" placeholder="Roll (ID)"
+                                          class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-sky-500 text-sm">
+                                    <input id="sEmail" type="email" placeholder="Email"
+                                          class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-sky-500 text-sm">
+                                    <div class="relative">
+                                          <input id="sPass" type="password" placeholder="Passcode"
+                                                class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-sky-500 text-sm">
+                                          <button onclick="togglePassword('sPass')"
+                                                class="absolute right-3 top-3 text-gray-500">👁️</button>
+                                    </div>
+                                    <button onclick="registerStudentAuth()"
+                                          class="w-full bg-sky-600 py-3 rounded-xl font-bold text-xs mt-2 hover:bg-sky-500 transition-all">DEPLOY
+                                          STUDENT 🚀</button>
+                              </div>
+                        </div>
+
+                        <div class="glass p-6 rounded-3xl">
+                              <h3 class="text-lg font-bold mb-5 flex items-center gap-2">📢 Notice Board</h3>
+                              <textarea id="noticeText" placeholder="সিস্টেম নোটিশ এখানে লিখুন..."
+                                    class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-yellow-500 text-xs min-h-[80px] mb-3"></textarea>
+                              <button onclick="updateNotice()"
+                                    class="w-full bg-yellow-600/20 text-yellow-500 border border-yellow-500/20 py-3 rounded-xl font-bold text-xs">UPDATE
+                                    NOTICE</button>
+                        </div>
+                  </div>
+
+                  <div class="lg:col-span-4 space-y-8">
+                        <div class="glass p-6 rounded-3xl border-b-4 border-emerald-500">
+                              <h3 class="text-lg font-bold mb-4 flex items-center gap-2">🛰️ Live Session Link</h3>
+                              <input id="liveLink" type="text" placeholder="Google Meet/Zoom Link"
+                                    class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-emerald-500 text-sm mb-3">
+                              <button onclick="updateLiveLink()"
+                                    class="w-full bg-emerald-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-500 transition-all">Update
+                                    Live Link</button>
+                        </div>
+
+                        <div class="glass p-6 rounded-3xl">
+                              <h3 class="text-lg font-bold mb-5 flex items-center gap-2">📂 Resource Manager</h3>
+                              <div class="space-y-4">
+                                    <div>
+                                          <label class="text-[10px] text-gray-500 uppercase tracking-widest block mb-1">Target
+                                                Section</label>
+                                          <select id="resChapter"
+                                                class="w-full bg-slate-900 p-3 rounded-xl border border-white/5 outline-none text-sm">
+                                                <option value="1">Chapter 1</option>
+                                                <option value="2">Chapter 2</option>
+                                                <option value="3.1">Chapter 3.1 (Number System)</option>
+                                                <option value="3.2">Chapter 3.2 (Digital Device)</option>
+                                                <option value="4">Chapter 4</option>
+                                                <option value="5">Chapter 5</option>
+                                                <option value="6">Chapter 6</option>
+                                                <option value="model-qa">Model Questions & Answers</option>
+                                          </select>
+                                    </div>
+                                    <input id="resTitle" type="text" placeholder="Resource Title"
+                                          class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-sky-500 text-sm">
+                                    <div>
+                                          <label class="text-[10px] text-gray-500 uppercase tracking-widest block mb-1">Resource
+                                                Type</label>
+                                          <select id="resType"
+                                                class="w-full bg-slate-900 p-3 rounded-xl border border-white/5 outline-none text-sm">
+                                                <option value="PDF">📄 PDF Document</option>
+                                                <option value="PPT">📊 PowerPoint (PPT)</option>
+                                                <option value="NOTE">📝 Hand Note / Suggestion</option>
+                                                <option value="VIDEO">📽️ Video Lecture</option>
+                                          </select>
+                                    </div>
+                                    <input id="resLink" type="text" placeholder="Resource URL (Drive/YouTube)"
+                                          class="w-full bg-slate-900/50 p-3 rounded-xl border border-white/5 outline-none focus:border-sky-500 text-sm">
+                                    <button onclick="uploadResource()"
+                                          class="w-full bg-emerald-600 py-3 rounded-xl font-bold text-xs mt-4 hover:bg-emerald-500 transition-all">UPLOAD
+                                          RESOURCE ⬆️</button>
+                              </div>
+                        </div>
+                  </div>
+
+                  <div class="lg:col-span-4 space-y-8">
+                        <div class="glass p-6 rounded-3xl">
+                              <h3 class="text-lg font-bold mb-5 flex items-center gap-2">📥 Student Inquiry</h3>
+                              <div id="message-inbox" class="max-h-[300px] overflow-y-auto pr-2">
+                                    <p class="text-[10px] text-gray-500 italic">No new messages in queue...</p>
+                              </div>
+                        </div>
+
+                        <div class="glass p-6 rounded-3xl bg-sky-500/5 border-sky-500/20">
+                              <h3 class="text-lg font-bold mb-4 flex items-center gap-2">🧠 AI Trainer</h3>
+                              <p class="text-[10px] text-gray-400 leading-relaxed mb-4">বটের নলেজ বেসে কাস্টম প্রশ্ন ও
+                                    উত্তর যোগ করার সুবিধা শীঘ্রই আসছে।</p>
+                              <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <div class="w-3/4 h-full bg-sky-500"></div>
+                              </div>
+                              <p class="text-right text-[8px] text-sky-500 mt-1 uppercase font-bold">Optimization 75%
+                              </p>
+                        </div>
+
+                        <div class="mt-4 pt-6 border-t border-white/5">
+                              <h4 class="text-xs font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Student
+                                    Database</h4>
+                              <div id="student-list-container" class="space-y-3 max-h-[250px] overflow-y-auto pr-2">
+                              </div>
+                        </div>
+                  </div>
+            </div>
+      </div>
+
+</body>
+
+</html>

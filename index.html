@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Rasel's ICT Hub</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+      <style>
+            body {
+                  background-color: #0b1120;
+                  min-height: 100vh;
+                  display: flex;
+                  flex-direction: column;
+                  margin: 0;
+            }
+
+            #canvas-container {
+                  position: fixed;
+                  width: 100%;
+                  height: 100%;
+                  z-index: -1;
+                  top: 0;
+                  left: 0;
+            }
+
+            .neon-glow {
+                  text-shadow: 0 0 10px #38bdf8;
+            }
+
+            .glass {
+                  background: rgba(255, 255, 255, 0.03);
+                  backdrop-filter: blur(12px);
+                  border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .grid-cell {
+                  height: 70px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 1.8rem;
+                  font-weight: bold;
+                  cursor: pointer;
+                  transition: 0.3s;
+            }
+
+            .grid-cell:hover {
+                  background: rgba(56, 189, 248, 0.15);
+            }
+      </style>
+</head>
+
+<body class="text-white font-sans overflow-x-hidden">
+
+      <canvas id="canvas-container"></canvas>
+
+      <nav class="p-6 flex justify-center w-full">
+            <div class="text-xl md:text-2xl font-bold text-sky-400 tracking-wider">🚀 RASEL'S ICT HUB</div>
+      </nav>
+
+      <main class="flex-grow flex flex-col items-center justify-center text-center px-4 py-10">
+            <div class="max-w-4xl w-full">
+                  <h1
+                        class="text-5xl md:text-7xl font-extrabold mb-4 animate__animated animate__fadeInDown leading-tight">
+                        Rasel Bhai's <br class="sm:hidden"><span class="text-sky-400 neon-glow">ICT ACADEMY</span>
+                  </h1>
+                  <p class="text-lg md:text-2xl text-gray-400 italic mb-10">"Code your life, Decode your future." 💻</p>
+
+                  <div class="flex flex-col sm:flex-row gap-4 mb-16 justify-center items-center">
+                        <button onclick="window.location.href='student.html'"
+                              class="bg-sky-500 w-64 py-4 rounded-xl font-bold shadow-lg shadow-sky-500/20 transform hover:scale-105 transition">Student
+                              Portal 🎓</button>
+                        <button onclick="window.location.href='admin.html'"
+                              class="glass w-64 py-4 rounded-xl font-bold hover:bg-white/10 transition">
+                              Teacher Login 🔐
+                        </button>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left relative z-10">
+                        <div class="glass p-6 rounded-2xl flex flex-col justify-between">
+                              <div>
+                                    <h3 class="text-sky-400 font-bold mb-1 flex items-center gap-2">🎮 Word Scramble
+                                    </h3>
+                                    <p id="hint-text" class="text-xs text-yellow-500 mb-3 font-medium">Hint: Loading...
+                                    </p>
+                                    <div class="bg-black/30 py-6 rounded-xl mb-4 text-center">
+                                          <span id="scrambled-word"
+                                                class="text-3xl font-mono tracking-widest text-white uppercase">---</span>
+                                    </div>
+                              </div>
+                              <input id="game-input" type="text" placeholder="সঠিক শব্দ..."
+                                    class="bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 w-full text-center outline-none mb-3">
+                              <button onclick="checkGame()"
+                                    class="bg-sky-500 w-full py-3 rounded-lg font-bold transition-all hover:bg-sky-600">Check
+                                    Answer</button>
+                              <p id="game-feedback" class="mt-2 text-sm text-center h-5 font-semibold"></p>
+                        </div>
+
+                        <div class="glass p-6 rounded-2xl">
+                              <h3 class="text-sky-400 font-bold mb-1 flex items-center gap-2">🤖 Smart Bot (Hard)</h3>
+                              <p class="text-xs text-gray-400 mb-4">বটকে হারানো এখন কঠিন!</p>
+                              <div id="board" class="grid grid-cols-3 gap-2 bg-slate-700/50 p-2 rounded-xl">
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(0)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(1)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(2)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(3)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(4)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(5)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(6)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(7)"></div>
+                                    <div class="grid-cell bg-slate-900/80 rounded-lg" onclick="makeMove(8)"></div>
+                              </div>
+                              <div class="flex justify-between items-center mt-4">
+                                    <p id="ttt-feedback" class="text-sm font-bold text-yellow-400"></p>
+                                    <button onclick="resetTicTacToe()"
+                                          class="text-xs bg-slate-700 px-3 py-1 rounded hover:bg-slate-600">Reset</button>
+                              </div>
+                        </div>
+                  </div>
+            </div>
+      </main>
+
+      <footer class="w-full relative z-10 mt-20">
+            <div class="glass border-t border-white/10 pt-16 pb-8 px-6">
+                  <div class="max-w-6xl mx-auto">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-12">
+
+                              <div class="flex flex-wrap gap-4 pt-6">
+                                    <a href="https://www.facebook.com/Raselvaiaa"
+                                          class="h-12 w-12 glass rounded-2xl flex items-center justify-center text-sky-400 border border-white/5 hover:border-sky-500/50 hover:bg-sky-500/10 hover:text-sky-500 transition-all duration-500 group relative"
+                                          title="Follow on Facebook">
+                                          <i
+                                                class="fa-brands fa-facebook-f text-xl group-hover:scale-110 transition-transform"></i>
+                                          <span class="absolute -top-1 -right-1 flex h-2 w-2">
+                                                <span
+                                                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                                                <span
+                                                      class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                                          </span>
+                                    </a>
+
+                                    <a href="https://bd.linkedin.com/in/ashakur-rahman-rasel"
+                                          class="h-12 px-4 glass rounded-2xl flex items-center gap-3 text-white border border-white/5 hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-500 group"
+                                          title="Connect for Cyber Security">
+                                          <i
+                                                class="fa-brands fa-linkedin text-xl text-[#0077b5] group-hover:scale-110 transition-transform"></i>
+                                          <div class="text-left">
+                                                <p
+                                                      class="text-[9px] font-bold text-red-500 uppercase tracking-widest leading-none">
+                                                      Security</p>
+                                                <p
+                                                      class="text-[10px] font-mono text-gray-400 group-hover:text-white transition-colors">
+                                                      LinkedIn_Profile</p>
+                                          </div>
+                                    </a>
+
+                                    <a href="https://bd.linkedin.com/in/ashakurrahmanrasel"
+                                          class="h-12 px-4 glass rounded-2xl flex items-center gap-3 text-white border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all duration-500 group"
+                                          title="Connect for SQA">
+                                          <i
+                                                class="fa-brands fa-linkedin text-xl text-[#0077b5] group-hover:scale-110 transition-transform"></i>
+                                          <div class="text-left">
+                                                <p
+                                                      class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest leading-none">
+                                                      SQA_Dev</p>
+                                                <p
+                                                      class="text-[10px] font-mono text-gray-400 group-hover:text-white transition-colors">
+                                                      LinkedIn_Profile</p>
+                                          </div>
+                                    </a>
+                              </div>
+
+                              <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div
+                                          class="glass p-6 rounded-3xl border-l-4 border-sky-500 group hover:bg-white/5 transition-all">
+                                          <p class="text-sky-500 text-[10px] font-bold uppercase tracking-widest mb-2">
+                                                Lead
+                                                Instructor</p>
+                                          <h5 class="text-2xl font-bold text-white mb-1 tracking-tight">A R RASEL</h5>
+                                          <p
+                                                class="text-gray-400 text-[10px] font-mono uppercase tracking-tighter leading-tight">
+                                                Status: <span class="text-green-500">Online</span> | InfoSec & QA
+                                                Architect
+                                          </p>
+                                    </div>
+
+                                    <div
+                                          class="glass p-6 rounded-3xl border-l-4 border-emerald-500 group hover:bg-white/5 transition-all">
+                                          <p
+                                                class="text-emerald-500 text-[10px] font-bold uppercase tracking-widest mb-3">
+                                                Ping Location</p>
+                                          <div class="space-y-3">
+                                                <a href="tel:+8801837686860"
+                                                      class="flex items-center gap-3 text-gray-300 hover:text-sky-400 transition-colors font-mono">
+                                                      <span class="text-emerald-400">📱</span> +880 1837 686860
+                                                </a>
+                                                <div class="flex items-start gap-3 text-gray-300">
+                                                      <span class="text-emerald-400 text-lg">📍</span>
+                                                      <span class="text-[11px] leading-relaxed uppercase font-medium">30/C,
+                                                            Jamal Khan Lane, Kotowali, Chittagong</span>
+                                                </div>
+                                          </div>
+                                    </div>
+                              </div>
+                        </div>
+
+                        <div
+                              class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                              <p class="text-[10px] font-mono text-gray-600 uppercase tracking-[0.4em]">
+                                    © 2026 RASEL'S ICT ACADEMY • All Protocols Secured
+                              </p>
+                              <div class="flex gap-6">
+                                    <span class="text-[9px] text-gray-700 uppercase tracking-widest font-bold">Uptime:
+                                          99.9%</span>
+                                    <span class="text-[9px] text-gray-700 uppercase tracking-widest font-bold">Latency:
+                                          0ms</span>
+                              </div>
+                        </div>
+                  </div>
+            </div>
+      </footer>
+
+      <script>
+
+            const canvas = document.getElementById('canvas-container');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let mouse = { x: null, y: null, radius: 150, down: false };
+
+            window.addEventListener('mousemove', e => { mouse.x = e.x; mouse.y = e.y; });
+            window.addEventListener('mousedown', () => { mouse.down = true; mouse.radius = 300; });
+            window.addEventListener('mouseup', () => { mouse.down = false; mouse.radius = 150; });
+            window.addEventListener('resize', () => { init(); });
+
+            class Particle {
+                  constructor(x, y) {
+                        this.x = x; this.y = y;
+                        this.size = Math.random() * 2 + 1;
+                        this.baseX = this.x; this.baseY = this.y;
+                        // Constant movement speed
+                        this.vx = (Math.random() - 0.5) * 1.5;
+                        this.vy = (Math.random() - 0.5) * 1.5;
+                        this.density = (Math.random() * 30) + 1;
+                  }
+                  draw() {
+                        ctx.fillStyle = '#38bdf8';
+                        ctx.beginPath();
+                        // এই লজিকটি কণাগুলোকে গোল এবং চারকোনা মিক্সড শেপ দিবে
+                        if (this.density > 15) {
+                              ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        } else {
+                              ctx.rect(this.x, this.y, this.size * 2, this.size * 2);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                  }
+                  update() {
+                        // Constant Floating Animation (Click korar ageo cholbe)
+                        if (!mouse.down) {
+                              this.x += this.vx;
+                              this.y += this.vy;
+
+                              // Screen boundary check jate baire na chole jay
+                              if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                              if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                        }
+
+                        // Mouse Interaction (Tanatani Logic)
+                        let dx = mouse.x - this.x;
+                        let dy = mouse.y - this.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < mouse.radius) {
+                              if (mouse.down) {
+                                    // Mouse-er dike tene niye asha
+                                    let forceDirectionX = dx / distance;
+                                    let forceDirectionY = dy / distance;
+                                    this.x += forceDirectionX * 12;
+                                    this.y += forceDirectionY * 12;
+                              } else {
+                                    // Mouse theke dure shore jaoa (Hover effect)
+                                    let force = (mouse.radius - distance) / mouse.radius;
+                                    let forceDirectionX = dx / distance;
+                                    let forceDirectionY = dy / distance;
+                                    this.x -= forceDirectionX * force * this.density;
+                                    this.y -= forceDirectionY * force * this.density;
+                              }
+                        }
+                  }
+            }
+
+            function init() {
+                  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+                  particles = [];
+                  // এখানে ৯০০০ এর বদলে ৫০০০ দিন, এতে কণা অনেক ঘন হবে
+                  let numberOfParticles = (canvas.height * canvas.width) / 5000;
+                  for (let i = 0; i < numberOfParticles; i++) {
+                        let x = Math.random() * canvas.width;
+                        let y = Math.random() * canvas.height;
+                        particles.push(new Particle(x, y));
+                  }
+            }
+
+            function animate() {
+                  ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  for (let i = 0; i < particles.length; i++) {
+                        particles[i].draw();
+                        particles[i].update();
+                  }
+                  connect();
+                  requestAnimationFrame(animate);
+            }
+
+            function connect() {
+                  for (let a = 0; a < particles.length; a++) {
+                        for (let b = a; b < particles.length; b++) {
+                              let dx = particles[a].x - particles[b].x;
+                              let dy = particles[a].y - particles[b].y;
+                              let distance = Math.sqrt(dx * dx + dy * dy);
+                              // এখানে ১২০ এর বদলে ২০০ বা ২৫০ দিন, এতে লাইনগুলো অনেক লম্বা হবে
+                              if (distance < 200) {
+                                    ctx.strokeStyle = `rgba(56, 189, 248, ${1 - distance / 200 - 0.2})`;
+                                    ctx.lineWidth = 1;
+                                    ctx.beginPath(); ctx.moveTo(particles[a].x, particles[a].y);
+                                    ctx.lineTo(particles[b].x, particles[b].y); ctx.stroke();
+                              }
+                        }
+                  }
+            }
+            init(); animate();
+
+
+            // --- Game Logics (Scramble & Tic-Tac-Toe) remain same as previous working version ---
+            const wordsBank = [{ c: "COMPUTER", s: "OMREPUCT", h: "Hint: প্রধান ইলেকট্রনিক যন্ত্র" }, { c: "INTERNET", s: "RENETNIT", h: "Hint: সারা বিশ্বের নেটওয়ার্ক" }, { c: "BINARY", s: "NARYBI", h: "Hint: ০ এবং ১ এর লজিক" }, { c: "DATABASE", s: "BASEDATA", h: "Hint: তথ্য জমা রাখার ভাণ্ডার" }];
+            let currentItem;
+            function loadWord() { currentItem = wordsBank[Math.floor(Math.random() * wordsBank.length)]; document.getElementById('scrambled-word').innerText = currentItem.s; document.getElementById('hint-text').innerText = currentItem.h; }
+            function checkGame() {
+                  let val = document.getElementById('game-input').value.toUpperCase().trim();
+                  let fb = document.getElementById('game-feedback');
+                  if (val === currentItem.c) { fb.innerText = "✅ চমৎকার!"; fb.style.color = "#4ade80"; setTimeout(() => { document.getElementById('game-input').value = ""; fb.innerText = ""; loadWord(); }, 1500); }
+                  else { fb.innerText = "❌ ভুল!"; fb.style.color = "#f87171"; }
+            }
+            loadWord();
+
+            let board = ["", "", "", "", "", "", "", "", ""];
+            let gameOver = false;
+            function makeMove(i) {
+                  if (board[i] === "" && !gameOver) {
+                        board[i] = "X"; renderT();
+                        if (!checkW("X") && board.includes("")) setTimeout(botM, 500);
+                  }
+            }
+            function botM() {
+                  let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+                  if (empty.length > 0 && !gameOver) {
+                        let move = empty[Math.floor(Math.random() * empty.length)];
+                        board[move] = "O"; renderT(); checkW("O");
+                  }
+            }
+            function renderT() {
+                  let cells = document.getElementsByClassName('grid-cell');
+                  for (let i = 0; i < 9; i++) { cells[i].innerText = board[i]; cells[i].style.color = board[i] === "X" ? "#38bdf8" : "#f87171"; }
+            }
+            function checkW(p) {
+                  const wins = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+                  if (wins.some(w => w.every(i => board[i] === p))) {
+                        document.getElementById('ttt-feedback').innerText = p === "X" ? "🎉 তুমি জিতেছো!" : "🤖 বট জিতেছে!";
+                        gameOver = true; return true;
+                  }
+                  if (!board.includes("")) { document.getElementById('ttt-feedback').innerText = "🤝 ড্র!"; gameOver = true; }
+                  return false;
+            }
+            function resetTicTacToe() { board = ["", "", "", "", "", "", "", "", ""]; gameOver = false; document.getElementById('ttt-feedback').innerText = ""; renderT(); }
+      </script>
+</body>
+
+</html>
